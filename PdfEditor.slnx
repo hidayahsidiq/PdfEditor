@@ -1,0 +1,7 @@
+<Solution>
+  <Configurations>
+    <Platform Name="x64" />
+    <Platform Name="x86" />
+  </Configurations>
+  <Project Path="PdfEditor/PdfEditor.vcxproj" Id="6580a6b1-07a5-41ed-8148-c829636cd715" />
+</Solution>
