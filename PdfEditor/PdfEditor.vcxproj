@@ -77,14 +77,20 @@
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
+      <AdditionalIncludeDirectories>$(ProjectDir)third_party\pdfium\include</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>$(ProjectDir)third_party\pdfium\lib</AdditionalLibraryDirectories>
+      <AdditionalDependencies>pdfium.dll.lib</AdditionalDependencies>
     </Link>
     <Manifest>
       <EnableSegmentHeap>true</EnableSegmentHeap>
     </Manifest>
+    <PostBuildEvent>
+      <Command>xcopy /Y /D "$(ProjectDir)third_party\pdfium\bin\*.dll" "$(OutDir)"</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
@@ -95,14 +101,20 @@
       <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
+      <AdditionalIncludeDirectories>$(ProjectDir)third_party\pdfium\include</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>$(ProjectDir)third_party\pdfium\lib</AdditionalLibraryDirectories>
+      <AdditionalDependencies>pdfium.dll.lib</AdditionalDependencies>
     </Link>
     <Manifest>
       <EnableSegmentHeap>true</EnableSegmentHeap>
     </Manifest>
+    <PostBuildEvent>
+      <Command>xcopy /Y /D "$(ProjectDir)third_party\pdfium\bin\*.dll" "$(OutDir)"</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
@@ -111,14 +123,20 @@
       <PreprocessorDefinitions>_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
+      <AdditionalIncludeDirectories>$(ProjectDir)third_party\pdfium\include</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>$(ProjectDir)third_party\pdfium\lib</AdditionalLibraryDirectories>
+      <AdditionalDependencies>pdfium.dll.lib</AdditionalDependencies>
     </Link>
     <Manifest>
       <EnableSegmentHeap>true</EnableSegmentHeap>
     </Manifest>
+    <PostBuildEvent>
+      <Command>xcopy /Y /D "$(ProjectDir)third_party\pdfium\bin\*.dll" "$(OutDir)"</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -129,23 +147,47 @@
       <PreprocessorDefinitions>NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
+      <AdditionalIncludeDirectories>$(ProjectDir)third_party\pdfium\include</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>$(ProjectDir)third_party\pdfium\lib</AdditionalLibraryDirectories>
+      <AdditionalDependencies>pdfium.dll.lib</AdditionalDependencies>
     </Link>
     <Manifest>
       <EnableSegmentHeap>true</EnableSegmentHeap>
     </Manifest>
+    <PostBuildEvent>
+      <Command>xcopy /Y /D "$(ProjectDir)third_party\pdfium\bin\*.dll" "$(OutDir)"</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="App.h" />
+    <ClInclude Include="EditTextModel.h" />
+    <ClInclude Include="EditView.h" />
     <ClInclude Include="framework.h" />
+    <ClInclude Include="ListViewPageView.h" />
+    <ClInclude Include="MainWindow.h" />
+    <ClInclude Include="PageModel.h" />
     <ClInclude Include="PdfEditor.h" />
+    <ClInclude Include="PdfEngine.h" />
+    <ClInclude Include="PdfTextExtractor.h" />
     <ClInclude Include="Resource.h" />
+    <ClInclude Include="StringUtils.h" />
     <ClInclude Include="targetver.h" />
+    <ClInclude Include="ThumbnailGenerator.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="PdfEditor.cpp" />
+    <ClCompile Include="App.cpp" />
+    <ClCompile Include="EditView.cpp" />
+    <ClCompile Include="ListViewPageView.cpp" />
+    <ClCompile Include="main.cpp" />
+    <ClCompile Include="MainWindow.cpp" />
+    <ClCompile Include="PdfEngine.cpp" />
+    <ClCompile Include="PdfTextExtractor.cpp" />
+    <ClCompile Include="StringUtils.cpp" />
+    <ClCompile Include="ThumbnailGenerator.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="PdfEditor.rc" />
@@ -154,7 +196,17 @@
     <Image Include="PdfEditor.ico" />
     <Image Include="small.ico" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="packages.config" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
+    <Import Project="..\packages\bblanchon.PDFium.Win32.153.0.7988\build\native\bblanchon.PDFium.Win32.targets" Condition="Exists('..\packages\bblanchon.PDFium.Win32.153.0.7988\build\native\bblanchon.PDFium.Win32.targets')" />
   </ImportGroup>
+  <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
+    <PropertyGroup>
+      <ErrorText>This project references NuGet package(s) that are missing on this computer. Use NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
+    </PropertyGroup>
+    <Error Condition="!Exists('..\packages\bblanchon.PDFium.Win32.153.0.7988\build\native\bblanchon.PDFium.Win32.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\bblanchon.PDFium.Win32.153.0.7988\build\native\bblanchon.PDFium.Win32.targets'))" />
+  </Target>
 </Project>
