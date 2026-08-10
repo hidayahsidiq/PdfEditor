@@ -1,5 +1,4 @@
 #pragma once
-#pragma once
 
 #include <windows.h>
 #include <string>
@@ -21,7 +20,7 @@ public:
         std::string& error
     );
 
-    // Compatibility overload for your existing App.cpp code.
+    // Compatibility overload for existing App.cpp code.
     bool GenerateThumbnail(
         const std::wstring& pdfPath,
         int pageIndex,

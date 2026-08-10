@@ -173,6 +173,7 @@
     <ClInclude Include="PdfEditor.h" />
     <ClInclude Include="PdfEngine.h" />
     <ClInclude Include="PdfTextExtractor.h" />
+    <ClInclude Include="PdfTextPatcher.h" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="StringUtils.h" />
     <ClInclude Include="targetver.h" />
@@ -186,6 +187,7 @@
     <ClCompile Include="MainWindow.cpp" />
     <ClCompile Include="PdfEngine.cpp" />
     <ClCompile Include="PdfTextExtractor.cpp" />
+    <ClCompile Include="PdfTextPatcher.cpp" />
     <ClCompile Include="StringUtils.cpp" />
     <ClCompile Include="ThumbnailGenerator.cpp" />
   </ItemGroup>

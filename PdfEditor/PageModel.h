@@ -25,7 +25,6 @@ enum CommandId
     ID_CMD_SPLIT_ALL,
     ID_CMD_ABOUT,
 
-    // New edit commands
     ID_CMD_EDIT_PAGE_TEXT,
     ID_CMD_BACK_TO_PAGES
 };

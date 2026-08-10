@@ -5,6 +5,9 @@
 #include <vector>
 #include <string.h>
 
+// If your PDFium import library is named pdfium.lib,
+// change this line to:
+// #pragma comment(lib, "pdfium.lib")
 #pragma comment(lib, "pdfium.dll.lib")
 
 ///////////////////////////////////////////////////////////////////////////////

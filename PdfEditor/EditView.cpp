@@ -1,21 +1,15 @@
 #include "EditView.h"
 #include "StringUtils.h"
+#include "PdfTextPatcher.h"
 
 #include <windowsx.h>
 #include <commctrl.h>
 #include <math.h>
 #include <algorithm>
 #include <string.h>
-#include <stdio.h>
-
-
 
 #pragma comment(lib, "pdfium.lib")
 #pragma comment(lib, "comctl32.lib")
-
-#ifndef FPDF_FILLMODE_WINDING
-#define FPDF_FILLMODE_WINDING 1
-#endif
 
 ///////////////////////////////////////////////////////////////////////////////
 // Helper: create HBITMAP from PDFium bitmap
@@ -81,29 +75,6 @@ static HBITMAP CreateDIBFromFPDFBitmap(FPDF_BITMAP fpdfBitmap)
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-// PDF save helper
-///////////////////////////////////////////////////////////////////////////////
-
-
-
-static int PdfWriteBlock(
-    FPDF_FILEWRITE* pThis,
-    const void* pData,
-    unsigned long size)
-{
-    PdfFileWriter* writer = reinterpret_cast<PdfFileWriter*>(pThis);
-
-    if (!writer || !writer->file)
-    {
-        return 0;
-    }
-
-    size_t written = fwrite(pData, 1, size, writer->file);
-
-    return written == size ? 1 : 0;
-}
-
-///////////////////////////////////////////////////////////////////////////////
 // EditView
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -132,7 +103,10 @@ bool EditView::Create(HWND parent, HINSTANCE hInstance)
         100,
         100,
         parent,
+
+        // FIXED: correct 64-bit HMENU cast
         reinterpret_cast<HMENU>(static_cast<INT_PTR>(IDC_EDIT_VIEW)),
+
         hInstance,
         this
     );
@@ -416,6 +390,8 @@ void EditView::OpenPage(const PageRef& pageRef)
 
     m_patches.clear();
     m_words.clear();
+
+    m_sourcePath = pageRef.sourcePath;
 
     std::string error;
 
@@ -883,34 +859,38 @@ void EditView::SaveEditsAs()
         return;
     }
 
-    ShowInfoW(
-        m_hwnd,
-        L"Text edit preview is working.\n\n"
-        L"This PDFium build does not provide reliable text-content saving.\n\n"
-        L"To save text edits into PDF, you need one of these:\n"
-        L"1. PoDoFo\n"
-        L"2. PDF-XChange SDK\n"
-        L"3. Foxit PDF SDK\n"
-        L"4. Another commercial PDF editing SDK"
+    std::wstring savePath;
+
+    if (!SavePdfFile(m_hwnd, savePath))
+    {
+        return;
+    }
+
+    if (_wcsicmp(m_sourcePath.c_str(), savePath.c_str()) == 0)
+    {
+        ShowErrorW(
+            m_hwnd,
+            L"Please choose a different output file.\n"
+            L"Do not overwrite the source file directly."
+        );
+
+        return;
+    }
+
+    std::string error;
+
+    bool ok = PdfTextPatcher::ApplyPatches(
+        m_sourcePath,
+        savePath,
+        m_patches,
+        error
     );
-}
 
-bool EditView::ApplyPatchesToDocument(std::string& error)
-{
-    error =
-        "This PDFium build does not support saving text edits. "
-        "Use PoDoFo or a commercial PDF SDK.";
+    if (!ok)
+    {
+        ShowErrorAnsi(m_hwnd, error);
+        return;
+    }
 
-    return false;
-}
-
-bool EditView::SaveDocumentToFile(
-    const std::wstring& outputPath,
-    std::string& error)
-{
-    error =
-        "This PDFium build does not support saving text edits. "
-        "Use PoDoFo or a commercial PDF SDK.";
-
-    return false;
+    ShowInfoW(m_hwnd, L"Edited PDF saved successfully:\n" + savePath);
 }

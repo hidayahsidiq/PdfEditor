@@ -51,6 +51,7 @@ private:
     );
 
     void CreateEditControl();
+
     void ShowEditorForWord(int wordIndex);
     void ShowEditorForNewText(double pdfX, double pdfY);
     void ShowEditorForPatch(const EditTextPatch& patch);
@@ -78,12 +79,6 @@ private:
 
     void AddOrUpdatePatch(const EditTextPatch& patch);
 
-    bool ApplyPatchesToDocument(std::string& error);
-    bool SaveDocumentToFile(
-        const std::wstring& outputPath,
-        std::string& error
-    );
-
     void CleanupPdf();
 
     HWND m_hwnd = nullptr;
@@ -99,6 +94,8 @@ private:
     FPDF_PAGE m_page = nullptr;
 
     int m_pageIndex = 0;
+
+    std::wstring m_sourcePath;
 
     double m_pageWidth = 0.0;
     double m_pageHeight = 0.0;

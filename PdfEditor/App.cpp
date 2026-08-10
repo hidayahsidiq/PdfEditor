@@ -4,6 +4,7 @@
 #include <commctrl.h>
 #include <wchar.h>
 #include <algorithm>
+#include <string>
 
 int App::Run(HINSTANCE hInstance)
 {
@@ -17,12 +18,14 @@ int App::Run(HINSTANCE hInstance)
     }
 
     InitializeImageList();
+
     if (!m_editView.Create(m_mainWindow.GetHwnd(), hInstance))
     {
         return 0;
     }
 
     ShowWindow(m_editView.GetHwnd(), SW_HIDE);
+
     UpdateStatus();
 
     MSG msg = {};
@@ -143,8 +146,10 @@ void App::OnCommand(int commandId)
             m_mainWindow.GetHwnd(),
             L"Offline PDF Editor\n\nQPDF + PDFium + Win32"
         );
+
         break;
     }
+
     case ID_CMD_EDIT_PAGE_TEXT:
     {
         EditSelectedPage();
@@ -240,6 +245,7 @@ void App::SaveAs()
             L"You cannot save over a source file while it is loaded.\n"
             L"Please choose a different file name."
         );
+
         return;
     }
 
@@ -282,6 +288,7 @@ void App::ExtractSelected()
             L"You cannot save over a source file while it is loaded.\n"
             L"Please choose a different file name."
         );
+
         return;
     }
 
@@ -333,8 +340,9 @@ void App::SplitAll()
                 m_mainWindow.GetHwnd(),
                 L"One of the output files is also a loaded source file:\n" +
                 outputPath +
-                L"\n\nPlease choose a different base output file."
+                L"\nPlease choose a different base output file."
             );
+
             return;
         }
 
@@ -348,7 +356,10 @@ void App::SplitAll()
         }
     }
 
-    ShowInfoW(m_mainWindow.GetHwnd(), L"All pages exported as separate PDF files.");
+    ShowInfoW(
+        m_mainWindow.GetHwnd(),
+        L"All pages exported as separate PDF files."
+    );
 }
 
 void App::RotateSelected(int amount)
@@ -470,6 +481,7 @@ bool App::IsCurrentSourceFile(const std::wstring& path) const
 
     return false;
 }
+
 void App::EditSelectedPage()
 {
     int index = m_mainWindow.GetPageView().GetSelectedIndex();
