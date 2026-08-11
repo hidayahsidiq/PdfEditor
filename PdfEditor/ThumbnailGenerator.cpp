@@ -5,10 +5,8 @@
 #include <vector>
 #include <string.h>
 
-// If your PDFium import library is named pdfium.lib,
-// change this line to:
-// #pragma comment(lib, "pdfium.lib")
-#pragma comment(lib, "pdfium.dll.lib")
+// PDFium library will be linked from project properties.
+// Do not use #pragma comment(lib, ...) unless the name exactly matches your .lib file.
 
 ///////////////////////////////////////////////////////////////////////////////
 // Helper: create fixed-size white canvas and center the rendered PDF bitmap.

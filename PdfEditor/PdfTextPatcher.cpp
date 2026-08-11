@@ -179,14 +179,7 @@ static void SetPainterCanvas(PdfPainter& painter, PdfPage* page)
         return;
     }
 
-    if constexpr (HasSetCanvasPageRef<PdfPainter>::value)
-    {
-        painter.SetCanvas(*page);
-    }
-    else if constexpr (HasSetCanvasPagePtr<PdfPainter>::value)
-    {
-        painter.SetCanvas(page);
-    }
+    painter.SetCanvas(*page, PdfPainterFlags{});
 }
 
 ///////////////////////////////////////////////////////////////////////////////

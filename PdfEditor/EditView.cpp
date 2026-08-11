@@ -8,7 +8,7 @@
 #include <algorithm>
 #include <string.h>
 
-#pragma comment(lib, "pdfium.lib")
+
 #pragma comment(lib, "comctl32.lib")
 
 ///////////////////////////////////////////////////////////////////////////////
