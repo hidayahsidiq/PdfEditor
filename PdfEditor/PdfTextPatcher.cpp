@@ -15,7 +15,7 @@
 using namespace PoDoFo;
 
 ///////////////////////////////////////////////////////////////////////////////
-// Helper: detect color methods
+// Detect possible PoDoFo color APIs
 ///////////////////////////////////////////////////////////////////////////////
 
 template <typename T, typename = void>
@@ -59,55 +59,7 @@ struct HasSetFillAndStrokeColor<
 };
 
 ///////////////////////////////////////////////////////////////////////////////
-// Helper: detect GraphicsState member/function
-///////////////////////////////////////////////////////////////////////////////
-
-template <typename T, typename = void>
-struct HasGraphicsStateMember : std::false_type {};
-
-template <typename T>
-struct HasGraphicsStateMember<
-    T,
-    std::void_t<decltype(std::declval<T>().GraphicsState)>
-> : std::true_type {
-};
-
-template <typename T, typename = void>
-struct HasGraphicsStateFunction : std::false_type {};
-
-template <typename T>
-struct HasGraphicsStateFunction<
-    T,
-    std::void_t<decltype(std::declval<T>().GraphicsState())>
-> : std::true_type {
-};
-
-///////////////////////////////////////////////////////////////////////////////
-// Helper: detect SetCanvas argument type
-///////////////////////////////////////////////////////////////////////////////
-
-template <typename T, typename = void>
-struct HasSetCanvasPageRef : std::false_type {};
-
-template <typename T>
-struct HasSetCanvasPageRef<
-    T,
-    std::void_t<decltype(std::declval<T>().SetCanvas(std::declval<PdfPage&>()))>
-> : std::true_type {
-};
-
-template <typename T, typename = void>
-struct HasSetCanvasPagePtr : std::false_type {};
-
-template <typename T>
-struct HasSetCanvasPagePtr<
-    T,
-    std::void_t<decltype(std::declval<T>().SetCanvas(std::declval<PdfPage*>()))>
-> : std::true_type {
-};
-
-///////////////////////////////////////////////////////////////////////////////
-// Color setter
+// Try to set color on painter
 ///////////////////////////////////////////////////////////////////////////////
 
 template <typename T>
@@ -141,35 +93,13 @@ bool TrySetColorOnTarget(T&& target, const PdfColor& color)
     }
 }
 
-template <typename TPainter>
-bool SetPainterFillColor(TPainter& painter, const PdfColor& color)
+static bool SetPainterFillColor(PdfPainter& painter, const PdfColor& color)
 {
-    if (TrySetColorOnTarget(painter, color))
-    {
-        return true;
-    }
-
-    if constexpr (HasGraphicsStateMember<TPainter>::value)
-    {
-        if (TrySetColorOnTarget(painter.GraphicsState, color))
-        {
-            return true;
-        }
-    }
-
-    if constexpr (HasGraphicsStateFunction<TPainter>::value)
-    {
-        if (TrySetColorOnTarget(painter.GraphicsState(), color))
-        {
-            return true;
-        }
-    }
-
-    return false;
+    return TrySetColorOnTarget(painter, color);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-// Canvas setter
+// Canvas helper
 ///////////////////////////////////////////////////////////////////////////////
 
 static void SetPainterCanvas(PdfPainter& painter, PdfPage* page)
@@ -183,7 +113,7 @@ static void SetPainterCanvas(PdfPainter& painter, PdfPage* page)
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-// Page/font pointer helpers
+// Page pointer helpers
 ///////////////////////////////////////////////////////////////////////////////
 
 static PdfPage* ToPagePtr(PdfPage* page)
@@ -215,6 +145,14 @@ static PdfPage* ToPagePtr(const std::shared_ptr<PdfPage>& page)
 {
     return page.get();
 }
+
+///////////////////////////////////////////////////////////////////////////////
+// Font pointer helpers
+//
+// IMPORTANT:
+// These helpers only convert to pointer.
+// They do NOT copy PdfFont.
+///////////////////////////////////////////////////////////////////////////////
 
 static const PdfFont* ToFontPtr(const PdfFont* font)
 {
@@ -312,9 +250,54 @@ bool PdfTextPatcher::ApplyPatches(
         auto&& pages = document.GetPages();
         auto&& fonts = document.GetFonts();
 
-        decltype(auto) fontResult = fonts.SearchFont("Helvetica");
+        const PdfFont* helvetica = nullptr;
 
-        const PdfFont* helvetica = ToFontPtr(fontResult);
+        // Preferred method for PoDoFo 0.10+:
+        // Get a standard PDF Base-14 font.
+        try
+        {
+            helvetica = ToFontPtr(
+                fonts.GetStandard14Font(PdfStandard14FontType::Helvetica)
+            );
+        }
+        catch (...)
+        {
+            helvetica = nullptr;
+        }
+
+        // Fallback: search Helvetica if it already exists in the document.
+        if (!helvetica)
+        {
+            try
+            {
+                helvetica = ToFontPtr(fonts.SearchFont("Helvetica"));
+            }
+            catch (...)
+            {
+                helvetica = nullptr;
+            }
+        }
+
+        // Fallback: search Arial.
+        if (!helvetica)
+        {
+            try
+            {
+                helvetica = ToFontPtr(fonts.SearchFont("Arial"));
+            }
+            catch (...)
+            {
+                helvetica = nullptr;
+            }
+        }
+
+        if (!helvetica)
+        {
+            error =
+                "Cannot get Helvetica/Arial font from PoDoFo. "
+                "Font API is still not returning a valid font.";
+            return false;
+        }
 
         int pageIndex = 0;
 
@@ -345,6 +328,11 @@ bool PdfTextPatcher::ApplyPatches(
 
                 SetPainterCanvas(painter, page);
 
+                bool colorSupported = SetPainterFillColor(
+                    painter,
+                    PdfColor(0.0, 0.0, 0.0)
+                );
+
                 for (const EditTextPatch& patch : patches)
                 {
                     if (patch.pageIndex != pageIndex)
@@ -373,21 +361,27 @@ bool PdfTextPatcher::ApplyPatches(
                         continue;
                     }
 
-                    // Cover old text with white rectangle.
-                    SetPainterFillColor(
-                        painter,
-                        PdfColor(1.0, 1.0, 1.0)
-                    );
+                    bool isReplacingExistingText = !patch.oldText.empty();
 
-                    painter.DrawRectangle(
-                        left,
-                        bottom,
-                        width,
-                        height
-                    );
+                    // Cover old text only when replacing existing text.
+                    // For newly added text, skip the rectangle to avoid
+                    // invisible text if color API is not detected.
+                    if (isReplacingExistingText && colorSupported)
+                    {
+                        SetPainterFillColor(
+                            painter,
+                            PdfColor(1.0, 1.0, 1.0)
+                        );
 
-                    // Draw replacement text.
-                    if (!patch.newText.empty() && helvetica != nullptr)
+                        painter.DrawRectangle(
+                            left,
+                            bottom,
+                            width,
+                            height
+                        );
+                    }
+
+                    if (!patch.newText.empty())
                     {
                         double fontSize = patch.fontSize;
 
@@ -398,10 +392,13 @@ bool PdfTextPatcher::ApplyPatches(
 
                         painter.TextState.SetFont(*helvetica, fontSize);
 
-                        SetPainterFillColor(
-                            painter,
-                            PdfColor(0.0, 0.0, 0.0)
-                        );
+                        if (colorSupported)
+                        {
+                            SetPainterFillColor(
+                                painter,
+                                PdfColor(0.0, 0.0, 0.0)
+                            );
+                        }
 
                         double baselineY = bottom + (height * 0.20);
 

@@ -680,12 +680,12 @@ void EditView::ShowEditorForNewText(double pdfX, double pdfY)
 
     patch.pageIndex = m_pageIndex;
 
-    patch.left = pdfX;
-    patch.bottom = pdfY - 4.0;
-    patch.right = pdfX + 150.0;
-    patch.top = pdfY + 14.0;
+    patch.left = 50.0;
+    patch.bottom = 50.0;
+    patch.right = 400.0;
+    patch.top = 100.0;
 
-    patch.fontSize = 12.0;
+    patch.fontSize = 24.0;
 
     patch.oldText = L"";
     patch.newText = L"";
@@ -847,6 +847,10 @@ void EditView::DrawOverlay(HDC hdc)
 
 void EditView::SaveEditsAs()
 {
+    // IMPORTANT:
+    // If the user is still typing, commit the edit first.
+    CommitEdit();
+
     if (!m_doc || !m_page)
     {
         ShowInfoW(m_hwnd, L"No PDF page is open.");
@@ -856,6 +860,12 @@ void EditView::SaveEditsAs()
     if (m_patches.empty())
     {
         ShowInfoW(m_hwnd, L"No text edits to save.");
+        return;
+    }
+
+    if (m_sourcePath.empty())
+    {
+        ShowErrorW(m_hwnd, L"Source PDF path is empty.");
         return;
     }
 
